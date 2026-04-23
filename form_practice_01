@@ -1,0 +1,402 @@
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Student Registration',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        scaffoldBackgroundColor: const Color(0xFF0D0D0D),
+        colorScheme: const ColorScheme.dark(
+          primary: Color(0xFFC9A96E),
+          surface: Color(0xFF1A1A1A),
+        ),
+        fontFamily: 'monospace',
+      ),
+      home: const RegistrationForm(),
+    );
+  }
+}
+
+class RegistrationForm extends StatefulWidget {
+  const RegistrationForm({super.key});
+
+  @override
+  State<RegistrationForm> createState() => _RegistrationFormState();
+}
+
+class _RegistrationFormState extends State<RegistrationForm> {
+  static const bgColor = Color(0xFF0D0D0D);
+  static const cardColor = Color(0xFF1A1A1A);
+  static const borderColor = Color(0xFF2A2A2A);
+  static const accentColor = Color(0xFFC9A96E);
+  static const textColor = Color(0xFFE8E0D4);
+  static const mutedColor = Color(0xFF5A5550);
+  static const inputBg = Color(0xFF111111);
+
+  final nameCtrl = TextEditingController();
+  final rollCtrl = TextEditingController();
+  final regCtrl = TextEditingController();
+  final phoneCtrl = TextEditingController();
+  final aboutCtrl = TextEditingController();
+
+  String? bloodGroup;
+  String? gender;
+  Map<String, String>? submittedData;
+
+  final bloodGroups = ['A+', 'A−', 'B+', 'B−', 'AB+', 'AB−', 'O+', 'O−'];
+  final genders = ['Male', 'Female', 'Other'];
+
+  @override
+  void dispose() {
+    nameCtrl.dispose();
+    rollCtrl.dispose();
+    regCtrl.dispose();
+    phoneCtrl.dispose();
+    aboutCtrl.dispose();
+    super.dispose();
+  }
+
+  void submit() {
+    final name = nameCtrl.text.trim();
+    final roll = rollCtrl.text.trim();
+    final reg = regCtrl.text.trim();
+    final phone = phoneCtrl.text.trim();
+
+    if (name.isEmpty || roll.isEmpty || reg.isEmpty || phone.isEmpty || bloodGroup == null || gender == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Please fill in all required fields.',
+            style: TextStyle(fontFamily: 'monospace', color: textColor),
+          ),
+          backgroundColor: cardColor,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            side: const BorderSide(color: accentColor),
+            borderRadius: BorderRadius.circular(0),
+          ),
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      submittedData = {
+        'Name': name,
+        'Roll': roll,
+        'Registration No.': reg,
+        'Blood Group': bloodGroup!,
+        'Gender': gender!,
+        'Phone': phone,
+        if (aboutCtrl.text.trim().isNotEmpty) 'About Me': aboutCtrl.text.trim(),
+      };
+
+      nameCtrl.clear();
+      rollCtrl.clear();
+      regCtrl.clear();
+      phoneCtrl.clear();
+      aboutCtrl.clear();
+      bloodGroup = null;
+      gender = null;
+    });
+  }
+
+  Widget fieldLabel(String text, {bool required = true}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        children: [
+          Text(
+            text.toUpperCase(),
+            style: const TextStyle(fontSize: 9, letterSpacing: 2.5, color: mutedColor),
+          ),
+          if (required) const Text(' *', style: TextStyle(color: accentColor, fontSize: 9)),
+        ],
+      ),
+    );
+  }
+
+  InputDecoration inputStyle(String hint) {
+    const border = OutlineInputBorder(
+      borderRadius: BorderRadius.zero,
+      borderSide: BorderSide(color: borderColor),
+    );
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: const TextStyle(color: mutedColor, fontSize: 12),
+      filled: true,
+      fillColor: inputBg,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      border: border,
+      enabledBorder: border,
+      focusedBorder: const OutlineInputBorder(
+        borderRadius: BorderRadius.zero,
+        borderSide: BorderSide(color: accentColor),
+      ),
+    );
+  }
+
+  Widget buildField(TextEditingController ctrl, String label, String hint, {TextInputType type = TextInputType.text}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        fieldLabel(label),
+        TextField(
+          controller: ctrl,
+          keyboardType: type,
+          style: const TextStyle(color: textColor, fontSize: 12),
+          cursorColor: accentColor,
+          decoration: inputStyle(hint),
+        ),
+      ],
+    );
+  }
+
+  Widget buildDropdown(String label, List<String> items, String? value, void Function(String?) onChange) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        fieldLabel(label),
+        Container(
+          decoration: BoxDecoration(color: inputBg, border: Border.all(color: borderColor)),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: value,
+              isExpanded: true,
+              hint: const Text('Select', style: TextStyle(color: mutedColor, fontSize: 12)),
+              dropdownColor: cardColor,
+              iconEnabledColor: mutedColor,
+              style: const TextStyle(color: textColor, fontSize: 12),
+              items: items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+              onChanged: onChange,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget buildGenderToggle() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        fieldLabel('Gender'),
+        Container(
+          decoration: BoxDecoration(border: Border.all(color: borderColor)),
+          child: Row(
+            children: genders.map((g) {
+              final isSelected = gender == g;
+              final isLast = g == genders.last;
+              return Expanded(
+                child: GestureDetector(
+                  onTap: () => setState(() => gender = g),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: isSelected ? accentColor.withOpacity(0.12) : Colors.transparent,
+                      border: isLast ? null : const Border(right: BorderSide(color: borderColor)),
+                    ),
+                    child: Text(
+                      g.toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 10,
+                        letterSpacing: 1.5,
+                        color: isSelected ? accentColor : mutedColor,
+                        fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget buildFormCard() {
+    return Container(
+      decoration: BoxDecoration(color: cardColor, border: Border.all(color: borderColor)),
+      child: Column(
+        children: [
+          Container(
+            height: 2,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(colors: [accentColor, Colors.transparent]),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                buildField(nameCtrl, 'Name', 'Full name'),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    Expanded(child: buildField(rollCtrl, 'Roll', 'Roll number')),
+                    const SizedBox(width: 12),
+                    Expanded(child: buildField(regCtrl, 'Registration Number', 'Registration number')),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    Expanded(
+                      child: buildDropdown('Blood Group', bloodGroups, bloodGroup, (v) => setState(() => bloodGroup = v)),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: buildField(phoneCtrl, 'Phone Number', '+880 1X XX XXX XXX', type: TextInputType.phone),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                buildGenderToggle(),
+                const SizedBox(height: 14),
+                fieldLabel('About Me', required: false),
+                TextField(
+                  controller: aboutCtrl,
+                  maxLines: 3,
+                  style: const TextStyle(color: textColor, fontSize: 12),
+                  cursorColor: accentColor,
+                  decoration: inputStyle('Tell us a bit about yourself...'),
+                ),
+                const SizedBox(height: 20),
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    const Divider(color: borderColor, thickness: 1),
+                    Container(
+                      color: cardColor,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: const Text(
+                        'SUBMIT',
+                        style: TextStyle(fontSize: 9, letterSpacing: 4, color: mutedColor),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: TextButton(
+                    onPressed: submit,
+                    style: TextButton.styleFrom(
+                      backgroundColor: accentColor,
+                      foregroundColor: bgColor,
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                    ),
+                    child: const Text(
+                      'SUBMIT',
+                      style: TextStyle(fontSize: 11, letterSpacing: 4, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildResultCard() {
+    if (submittedData == null) return const SizedBox.shrink();
+
+    return Container(
+      margin: const EdgeInsets.only(top: 20),
+      decoration: BoxDecoration(color: cardColor, border: Border.all(color: accentColor)),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: const [
+              CircleAvatar(radius: 4, backgroundColor: accentColor),
+              SizedBox(width: 12),
+              Text(
+                'Submission Recorded',
+                style: TextStyle(
+                  fontFamily: 'Georgia',
+                  fontSize: 16,
+                  color: accentColor,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          const Divider(color: borderColor, thickness: 1),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 20,
+            runSpacing: 14,
+            children: submittedData!.entries.map((entry) {
+              final fullWidth = entry.key == 'About Me';
+              return SizedBox(
+                width: fullWidth ? double.infinity : (MediaQuery.of(context).size.width - 104) / 2,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      entry.key.toUpperCase(),
+                      style: const TextStyle(fontSize: 9, letterSpacing: 2, color: mutedColor),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(entry.value, style: const TextStyle(fontSize: 12, color: textColor)),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: bgColor,
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 36),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            RichText(
+              text: const TextSpan(
+                style: TextStyle(fontFamily: 'Georgia', fontSize: 30, fontWeight: FontWeight.bold, height: 1.15),
+                children: [
+                  TextSpan(text: 'Student ', style: TextStyle(color: textColor)),
+                  TextSpan(text: 'Registration', style: TextStyle(color: accentColor)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Fill in all required fields and submit',
+              style: TextStyle(fontSize: 10, letterSpacing: 1.5, color: mutedColor),
+            ),
+            const SizedBox(height: 24),
+            buildFormCard(),
+            buildResultCard(),
+            const SizedBox(height: 32),
+          ],
+        ),
+      ),
+    );
+  }
+}
